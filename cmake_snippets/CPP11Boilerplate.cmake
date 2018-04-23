@@ -53,3 +53,8 @@ else()
     add_definitions(-DDEBUG)
 endif()
 
+option(BUILD_TESTS OFF)
+
+if (BUILD_TESTS)
+	add_definitions(META_BUILD_TESTS)
+endif()
