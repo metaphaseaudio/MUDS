@@ -11,7 +11,7 @@
 #   To use, simply add include this snippet *after* your top-level
 #   CMakeLists.txt project declaration.
 #
-
+set(MUDS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/shared/MUDS/)
 set_property(GLOBAL PROPERTY CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
@@ -56,5 +56,34 @@ endif()
 option(BUILD_TESTS OFF)
 
 if (BUILD_TESTS)
-	add_definitions(META_BUILD_TESTS)
+    configure_file(${MUDS_ROOT}/cmake_snippets/gtest/CMakeLists.txt.in googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+    if(result)
+        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+    if(result)
+        message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker
+    # settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Add googletest directly to our build. This defines
+    # the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+            ${CMAKE_BINARY_DIR}/googletest-build
+            EXCLUDE_FROM_ALL)
+
+
+    include_directories("${gtest_SOURCE_DIR}/include")
+        
+	set(GTEST_LIBRARIES gtest gtest_main)
+	enable_testing()
+	add_definitions(-DMETA_BUILD_TESTS=1)
 endif()
