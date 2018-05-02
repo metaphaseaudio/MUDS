@@ -80,7 +80,6 @@ if (BUILD_TESTS)
             ${CMAKE_BINARY_DIR}/googletest-build
             EXCLUDE_FROM_ALL)
 
-
     include_directories("${gtest_SOURCE_DIR}/include")
         
 	set(GTEST_LIBRARIES gtest gtest_main)
