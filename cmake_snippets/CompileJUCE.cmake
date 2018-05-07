@@ -134,6 +134,7 @@ if (WIN32)
     # MSVC seems to handle itself admirably, however,
     # MinGW requires a little hand-holding
     if (MINGW)
+        add_definitions("-DJUCE_MINGW")
         find_library(IMM32 imm32 REQUIRED)
         find_library(COMDLG32 comdlg32 REQUIRED)
         find_library(LIBVERSION version REQUIRED)
@@ -157,6 +158,8 @@ if (WIN32)
                 ${WSOCK32}
                 ${WININET}
                 ${WINMM})
+	else()
+        add_definitions("-DJUCE_MSVC")
     endif()
 
 endif (WIN32)
