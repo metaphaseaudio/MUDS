@@ -246,6 +246,12 @@ if (JUCE_ENABLE_CRYPTOGRAPHY)
     set(JUCE_SOURCE ${JUCE_SOURCE} ${JUCE_PATH}/modules/juce_cryptography/juce_cryptography${FILE_FORMAT})
 endif()
 
+if (JUCE_ENABLE_DSP)
+    message("-- JUCE: using DSP module")
+    set(JUCE_SOURCE ${JUCE_SOURCE} ${JUCE_PATH}/modules/juce_dsp/juce_dsp${FILE_FORMAT})
+    add_definitions(-DJUCE_MODULE_AVAILABLE_juce_dsp=1)
+endif()
+
 if (JUCE_ENABLE_DATA_STRUCTURES)
     message("-- JUCE: using Data Structures module")
     set(JUCE_SOURCE ${JUCE_SOURCE} ${JUCE_PATH}/modules/juce_data_structures/juce_data_structures${FILE_FORMAT})
