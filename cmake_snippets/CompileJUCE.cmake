@@ -142,11 +142,10 @@ if (WIN32)
         find_library(OLEAUT32 oleaut32 REQUIRED)
         find_library(RPCRT4 rpcrt4 REQUIRED)
         find_library(SHLWAPI shlwapi REQUIRED)
-        find_library(WS2_32 REQUIRED)
+        find_library(WS2_32 ws2_32 REQUIRED)
         find_library(WSOCK32 wsock32 REQUIRED)
         find_library(WININET wininet REQUIRED)
         find_library(WINMM winmm REQUIRED)
-
         set (JUCE_LIBS
                 ${COMDLG32}
                 ${IMM32}
@@ -157,7 +156,8 @@ if (WIN32)
                 ${SHLWAPI}
                 ${WSOCK32}
                 ${WININET}
-                ${WINMM})
+                ${WINMM}
+                ${WS2_32})
 	else()
         add_definitions("-DJUCE_MSVC")
     endif()

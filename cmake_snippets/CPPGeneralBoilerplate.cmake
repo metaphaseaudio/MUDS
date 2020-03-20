@@ -11,6 +11,7 @@
 #   To use, simply add include this snippet *after* your top-level
 #   CMakeLists.txt project declaration.
 #
+message("<< MUDS Build System v0.1 >>")
 set(MUDS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/shared/MUDS/)
 
 string(TIMESTAMP CMAKE_BUILD_TIMESTAMP "%H:%M:%S %m-%d-%Y")
@@ -28,7 +29,14 @@ endif()
 
 # Detect MinGW
 if (MINGW)
+	message("-- MinGW detected")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+endif()
+
+# Detect MSVC
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+	message("-- MSVC detected")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
 
 # Detect Apple
