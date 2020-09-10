@@ -158,7 +158,11 @@ if (WIN32)
                 ${WININET}
                 ${WINMM}
                 ${WS2_32})
-	else()
+	elseif(CLANG)
+        message("-- Using Clang-cl")
+        add_definitions("-DJUCE_CLANG")
+    else()
+        message("-- Using MSVC")
         add_definitions("-DJUCE_MSVC")
     endif()
 

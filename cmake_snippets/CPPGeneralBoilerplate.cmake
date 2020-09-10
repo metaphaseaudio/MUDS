@@ -16,6 +16,7 @@ set(MUDS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/shared/MUDS/)
 
 string(TIMESTAMP CMAKE_BUILD_TIMESTAMP "%H:%M:%S %m-%d-%Y")
 message("-- Timestamp: ${CMAKE_BUILD_TIMESTAMP}")
+message("-- Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/arch)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -37,6 +38,14 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	message("-- MSVC detected")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps2147483647")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:depth1024")
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3") 
+	message("-- Clang detected")
+    set(CLANG TRUE)
 endif()
 
 # Detect Apple
