@@ -307,3 +307,7 @@ if(THREADS_HAVE_PTHREAD_ARG)
     set_property(TARGET juce PROPERTY COMPILE_OPTIONS "-pthread")
     set_property(TARGET juce PROPERTY INTERFACE_COMPILE_OPTIONS "-pthread")
 endif()
+
+if (JUCE_BUILD_EXTRAS)
+    include("${CMAKE_CURRENT_LIST_DIR}/JUCEExtras.cmake")
+endif()
