@@ -70,33 +70,19 @@ endif()
 option(BUILD_TESTS OFF)
 
 if (BUILD_TESTS)
-#    configure_file(${MUDS_ROOT}/cmake_snippets/gtest/CMakeLists.txt.in googletest-download/CMakeLists.txt)
-#    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-#            RESULT_VARIABLE result
-#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-#    if(result)
-#        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-#    endif()
-#    execute_process(COMMAND ${CMAKE_COMMAND} --build .
-#            RESULT_VARIABLE result
-#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-#    if(result)
-#        message(FATAL_ERROR "Build step for googletest failed: ${result}")
-#    endif()
-#
-#    # Prevent overriding the parent project's compiler/linker
-#    # settings on Windows
-#    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-#
-#    # Add googletest directly to our build. This defines
-#    # the gtest and gtest_main targets.
-#    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-#            ${CMAKE_BINARY_DIR}/googletest-build
-#            EXCLUDE_FROM_ALL)
-#
-#    include_directories("${gtest_SOURCE_DIR}/include")
-    add_subdirectory(${MUDS_ROOT}/../googletest)
-	set(GTEST_LIBRARIES gtest gtest_main)
+    # This block is googletest's recommended way of including gtest.
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+    )
+
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    # This block sets some helpers and enables testing.
 	enable_testing()
-	add_definitions(-DMETA_BUILD_TESTS=1)
+    set(GTEST_LIBRARIES gtest gtest_main)
+    add_definitions(-DMETA_BUILD_TESTS=1)
 endif()
