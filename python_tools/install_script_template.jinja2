@@ -1,0 +1,67 @@
+[Setup]
+AppId={{ config.hash }}
+AppName={{ config.name }}
+AppVersion={{ config.version_string }}
+AppPublisher={{ config.publisher }}
+AppPublisherURL={{ config.url }}
+AppSupportURL={{ config.url }}
+AppUpdatesURL={{ config.url }}
+OutputBaseFilename="Install {{ config.publisher }} {{ config.name }} {{ config.version_string }}"
+Compression=lzma
+SolidCompression=yes
+WizardStyle=modern
+DisableDirPage=yes
+DisableProgramGroupPage=yes
+DefaultDirName="{autopf64}\{{ config.publisher }}\{{ config.name }}"
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Icons]
+Name: "{group}\{cm:UninstallProgram,{{ config.name }}}"; Filename: "{uninstallexe}"
+
+[Files]
+{% for component in config.components %}
+Source:  {{ component.source }}; DestDir: "{code:Get{{ component.name }}Dir}"; Flags: ignoreversion recursesubdirs createallsubdirs
+{% endfor %}
+
+[Components]
+{% for component in config.components %}
+Name: "{{ component.name }}"; Description: "{{ component.description }}"; Types: full
+{% endfor %}
+
+[Registry]
+{% for component in config.components %}
+Root: HKCU; Subkey: "Software\{{ config.registry_key_name }}"; Flags: uninsdeletekey; ValueType: string; ValueName: "{{ component.name }}InstallPath"; ValueData: "{code:Get{{ component.name }}Dir}";
+{% endfor %}
+
+[Code]
+var
+{% for component in config.components %}
+  {{ component.name }}DirPage: TInputDirWizardPage;
+{% endfor %}
+
+procedure InitializeWizard;
+begin
+  {% for component in config.components|reverse %}
+  {{ component.name }}DirPage := CreateInputDirPage(wpSelectComponents, 'Select install path', '{{ component.name }}', 'Select where to install the {{ component.description }}', False, '');
+  {{ component.name }}DirPage.Add('{{ component.description }}');
+  {{ component.name }}DirPage.Values[0] := GetPreviousData('{{ component.name }}Dir', ExpandConstant('{{ component.default_install_dir }}'))
+  {% endfor %}
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  {% for component in config.components %}
+  if PageID = {{ component.name }}DirPage.ID then
+    Result := not IsComponentSelected('{{ component.name }}');
+  {% endfor %}
+end;
+
+{% for component in config.components %}
+function Get{{ component.name }}Dir(Param: String): String;
+begin
+  Result := {{ component.name }}DirPage.Values[0];
+end;
+{% endfor %}
