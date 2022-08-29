@@ -28,6 +28,7 @@ class Config:
     version_string: str
     publisher: str
     url: str
+    output_dir: str
     components: List[Component]
     languages: List[str]
 
@@ -57,6 +58,3 @@ if __name__ == "__main__":
     if args.run_iscc:
         p = sp.Popen(["iscc", f"{config.name}.iss"])
         p.wait()
-
-
-

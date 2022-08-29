@@ -7,6 +7,9 @@ AppPublisherURL={{ config.url }}
 AppSupportURL={{ config.url }}
 AppUpdatesURL={{ config.url }}
 OutputBaseFilename="Install {{ config.publisher }} {{ config.name }} {{ config.version_string }}"
+{% if config.output_dir %}
+    OutputDir={{ config.output_dir }}
+{% endif %}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
