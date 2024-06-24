@@ -6,7 +6,7 @@ AppPublisher={{ config.publisher }}
 AppPublisherURL={{ config.url }}
 AppSupportURL={{ config.url }}
 AppUpdatesURL={{ config.url }}
-OutputBaseFilename="Install {{ config.publisher }} {{ config.name }} {{ config.version_string }}"
+OutputBaseFilename="{{ config.output_base_filenamem }}"
 {% if config.output_dir %}
     OutputDir={{ config.output_dir }}
 {% endif %}
