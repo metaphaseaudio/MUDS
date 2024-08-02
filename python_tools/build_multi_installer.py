@@ -15,11 +15,19 @@ SIGNTOOL = Path("/Program Files (x86)/Windows Kits/10/App Certification Kit/sign
 
 @dataclass_json
 @dataclass
+class InstallFile:
+    source: str
+    install_dir: str
+
+
+@dataclass_json
+@dataclass
 class Component:
     name: str
     source: str
     default_install_dir: Path
     description: str
+    extra_files: Optional[List[InstallFile]] = None
 
 
 @dataclass_json
@@ -54,16 +62,16 @@ if __name__ == "__main__":
     with open(args.config, "r") as fp:
         config = Config.from_json(''.join(fp.readlines()))
 
-    # template: Template
-    # with TEMPLATE_FILE.open("r") as fp:
-    #     template = Template(''.join(fp.readlines()), trim_blocks=True, lstrip_blocks=True)
-    #
-    # with open(f"{config.name}.iss", "w") as fp:
-    #     fp.write(template.render(config=config))
-    #
-    # if args.run_iscc:
-    #     p = sp.Popen(["iscc", f"{config.name}.iss"])
-    #     p.wait()
+    template: Template
+    with TEMPLATE_FILE.open("r") as fp:
+        template = Template(''.join(fp.readlines()), trim_blocks=True, lstrip_blocks=True)
+
+    with open(f"{config.name}.iss", "w") as fp:
+        fp.write(template.render(config=config))
+
+    if args.run_iscc:
+        p = sp.Popen(["iscc", f"{config.name}.iss"])
+        p.wait()
 
     if config.signing_cert:
         # C:\Users\Matt\code\er1_plugin

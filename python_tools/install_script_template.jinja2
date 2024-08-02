@@ -6,7 +6,7 @@ AppPublisher={{ config.publisher }}
 AppPublisherURL={{ config.url }}
 AppSupportURL={{ config.url }}
 AppUpdatesURL={{ config.url }}
-OutputBaseFilename="{{ config.output_base_filenamem }}"
+OutputBaseFilename="{{ config.output_base_filename }}"
 {% if config.output_dir %}
     OutputDir={{ config.output_dir }}
 {% endif %}
@@ -26,6 +26,13 @@ Name: "{group}\{cm:UninstallProgram,{{ config.name }}}"; Filename: "{uninstallex
 [Files]
 {% for component in config.components %}
 Source:  {{ component.source }}; DestDir: "{code:Get{{ component.name }}Dir}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+{% if component.extra_files%}
+{% for extra_file in component.extra_files %}
+Source:  {{ extra_file.source }}; DestDir: "{{extra_file.install_dir}}"; Flags: ignoreversion recursesubdirs createallsubdirs
+{% endfor %}
+{% endif %}
+
 {% endfor %}
 
 [Components]
