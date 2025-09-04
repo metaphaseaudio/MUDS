@@ -78,7 +78,7 @@ if (BUILD_TESTS)
     include(FetchContent)
     FetchContent_Declare(
         googletest
-        URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
     )
 
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -87,6 +87,7 @@ if (BUILD_TESTS)
 
     # This block sets some helpers and enables testing.
 	enable_testing()
-    set(GTEST_LIBRARIES gtest gtest_main)
+    set(GTEST_LIBRARIES GTest::gtest_main)
+    include(GoogleTest)
     add_definitions(-DMETA_BUILD_TESTS=1)
 endif()
