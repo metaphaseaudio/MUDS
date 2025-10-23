@@ -47,7 +47,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3") 
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 	message("-- Clang detected")
     set(CLANG TRUE)
 endif()
@@ -56,8 +56,8 @@ endif()
 if (APPLE)
     # Startlingly, this flag isn't set automatically, so here it is.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.10)
-    set(CMAKE_OSX_ARCHITECTURES x86_64 )
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+#    set(CMAKE_OSX_ARCHITECTURES x86_64 )
 endif (APPLE)
 
 # Set up some useful messages and defines based on build type
