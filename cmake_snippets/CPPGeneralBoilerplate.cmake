@@ -71,9 +71,9 @@ else()
     add_definitions(-D_NDEBUG=1)
 endif()
 
-option(BUILD_TESTS OFF)
+option(METAPHASE_BUILD_TESTS OFF)
 
-if (BUILD_TESTS)
+if (METAPHASE_BUILD_TESTS)
     # This block is googletest's recommended way of including gtest.
     include(FetchContent)
     FetchContent_Declare(
