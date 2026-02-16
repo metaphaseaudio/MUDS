@@ -12,7 +12,7 @@
 #
 # Variables:
 #   OPENSSL_VERSION - Version to build (default: 3.2.0)
-#   OPENSSL_INSTALL_DIR - Installation directory (default: ${CMAKE_BINARY_DIR}/deps/openssl)
+#   OPENSSL_INSTALL_DIR - Installation directory (default: ${CMAKE_BINARY_DIR}/_deps/openssl)
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -23,7 +23,7 @@ endif()
 
 # Installation directory
 if(NOT DEFINED OPENSSL_INSTALL_DIR)
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/deps/openssl)
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/_deps/openssl)
 endif()
 
 include(ExternalProject)
@@ -53,6 +53,13 @@ elseif(APPLE)
         set(BUILD_ARCHS ${CMAKE_SYSTEM_PROCESSOR})
     endif()
 
+    # Set the deployment target - arm64 requires at least 11.0
+    if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET STREQUAL "")
+        set(OPENSSL_DEPLOYMENT_TARGET "11.0")
+    else()
+        set(OPENSSL_DEPLOYMENT_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})
+    endif()
+
     # Check if we need a universal binary
     list(LENGTH BUILD_ARCHS NUM_ARCHS)
 
@@ -66,19 +73,33 @@ elseif(APPLE)
         foreach(ARCH ${BUILD_ARCHS})
             if(ARCH STREQUAL "arm64")
                 set(OPENSSL_PLATFORM "darwin64-arm64-cc")
+                # arm64 requires at least macOS 11.0
+                if(OPENSSL_DEPLOYMENT_TARGET VERSION_LESS "11.0")
+                    set(ARCH_DEPLOYMENT_TARGET "11.0")
+                else()
+                    set(ARCH_DEPLOYMENT_TARGET ${OPENSSL_DEPLOYMENT_TARGET})
+                endif()
             else()
                 set(OPENSSL_PLATFORM "darwin64-x86_64-cc")
+                set(ARCH_DEPLOYMENT_TARGET ${OPENSSL_DEPLOYMENT_TARGET})
             endif()
 
-            set(ARCH_INSTALL_DIR ${CMAKE_BINARY_DIR}/deps/openssl-${ARCH})
+            set(ARCH_INSTALL_DIR ${CMAKE_BINARY_DIR}/_deps/openssl-${ARCH})
 
             ExternalProject_Add(openssl_${ARCH}
                     URL ${OPENSSL_URL}
                     URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
-                    CONFIGURE_COMMAND ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
-                    --prefix=${ARCH_INSTALL_DIR}
-                    --openssldir=${ARCH_INSTALL_DIR}
-                    BUILD_COMMAND make -j8
+                    CONFIGURE_COMMAND
+                        ${CMAKE_COMMAND} -E env
+                            "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                        ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
+                        -mmacos-version-min=${ARCH_DEPLOYMENT_TARGET}
+                        --prefix=${ARCH_INSTALL_DIR}
+                        --openssldir=${ARCH_INSTALL_DIR}
+                    BUILD_COMMAND
+                        ${CMAKE_COMMAND} -E env
+                            "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                        make -j8
                     INSTALL_COMMAND make install_sw install_ssldirs
                     BUILD_IN_SOURCE 1
                     BUILD_BYPRODUCTS
@@ -117,7 +138,7 @@ elseif(APPLE)
         add_custom_command(
                 OUTPUT ${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_BINARY_DIR}/deps/openssl-${FIRST_ARCH}/include
+                ${CMAKE_BINARY_DIR}/_deps/openssl-${FIRST_ARCH}/include
                 ${OPENSSL_INSTALL_DIR}/include
                 DEPENDS openssl_${FIRST_ARCH}
                 COMMENT "Copying OpenSSL headers"
@@ -143,8 +164,15 @@ elseif(APPLE)
 
         if(ARCH STREQUAL "arm64")
             set(OPENSSL_PLATFORM "darwin64-arm64-cc")
+            # arm64 requires at least macOS 11.0
+            if(OPENSSL_DEPLOYMENT_TARGET VERSION_LESS "11.0")
+                set(ARCH_DEPLOYMENT_TARGET "11.0")
+            else()
+                set(ARCH_DEPLOYMENT_TARGET ${OPENSSL_DEPLOYMENT_TARGET})
+            endif()
         else()
             set(OPENSSL_PLATFORM "darwin64-x86_64-cc")
+            set(ARCH_DEPLOYMENT_TARGET ${OPENSSL_DEPLOYMENT_TARGET})
         endif()
 
         message(STATUS "Building OpenSSL for single architecture: ${ARCH}")
@@ -152,10 +180,17 @@ elseif(APPLE)
         ExternalProject_Add(openssl_external
                 URL ${OPENSSL_URL}
                 URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
-                CONFIGURE_COMMAND ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
-                --prefix=${OPENSSL_INSTALL_DIR}
-                --openssldir=${OPENSSL_INSTALL_DIR}
-                BUILD_COMMAND make -j8
+                CONFIGURE_COMMAND
+                    ${CMAKE_COMMAND} -E env
+                        "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                    ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
+                    -mmacos-version-min=${ARCH_DEPLOYMENT_TARGET}
+                    --prefix=${OPENSSL_INSTALL_DIR}
+                    --openssldir=${OPENSSL_INSTALL_DIR}
+                BUILD_COMMAND
+                    ${CMAKE_COMMAND} -E env
+                        "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                    make -j8
                 INSTALL_COMMAND make install_sw install_ssldirs
                 BUILD_IN_SOURCE 1
                 BUILD_BYPRODUCTS
