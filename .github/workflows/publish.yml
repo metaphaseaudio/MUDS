@@ -1,0 +1,109 @@
+name: Publish Artifacts to Downloads
+
+on:
+  workflow_call:
+    inputs:
+      slug:
+        description: "Product slug (e.g. 2001-amp)"
+        required: true
+        type: string
+      version:
+        description: "Semver version from extract-version"
+        required: true
+        type: string
+      muds-path:
+        description: "Path to MUDS submodule"
+        required: false
+        type: string
+        default: src/shared/MUDS
+      aws-region:
+        description: "AWS region for S3 bucket"
+        required: false
+        type: string
+        default: us-east-1
+      aws-role-arn:
+        description: "IAM role ARN for GitHub OIDC assumption"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publish artifacts to S3
+        run: |
+          SCRIPT="${{ inputs.muds-path }}/scripts/publish-artifact.sh"
+          chmod +x "$SCRIPT"
+
+          MANIFEST_ENTRIES=""
+
+          declare -A PLATFORM_MAP=(
+            [macos-installer]=mac
+            [windows-installer]=win
+            [linux-installer]=linux
+          )
+
+          for dir in dist/*/; do
+            dirname="$(basename "$dir")"
+            platform="${PLATFORM_MAP[$dirname]:-}"
+            if [[ -z "$platform" ]]; then
+              echo "Skipping unknown artifact directory: $dirname"
+              continue
+            fi
+
+            for file in "$dir"*; do
+              [[ -f "$file" ]] || continue
+              case "$file" in
+                *.pkg|*.exe|*.deb|*.tar.gz)
+                  echo "::group::Publishing $(basename "$file")"
+                  OUTPUT=$("$SCRIPT" "${{ inputs.slug }}" "${{ inputs.version }}" "$platform" "$file" 2>&1)
+                  echo "$OUTPUT"
+                  echo "::endgroup::"
+
+                  # Extract the manifest JSON line from script output
+                  ENTRY=$(echo "$OUTPUT" | grep '"platform"')
+                  if [[ -n "$ENTRY" ]]; then
+                    MANIFEST_ENTRIES="${MANIFEST_ENTRIES}${ENTRY}"$'\n'
+                  fi
+                  ;;
+                *)
+                  echo "Skipping $(basename "$file")"
+                  ;;
+              esac
+            done
+          done
+
+          {
+            echo "## Next Steps: Update manifest.json"
+            echo ""
+            echo "Add the following entries to \`manifest.json\` for the \`${{ inputs.slug }}\` product,"
+            echo "then upload it to S3:"
+            echo ""
+            echo '```json'
+            echo "$MANIFEST_ENTRIES"
+            echo '```'
+            echo ""
+            echo '```bash'
+            echo "aws s3 cp manifest.json s3://\$BUCKET/manifest.json --cache-control \"public, max-age=300\""
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
