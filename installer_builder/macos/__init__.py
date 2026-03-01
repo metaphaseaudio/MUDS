@@ -1,0 +1,1 @@
+from .package import build_macos_installer

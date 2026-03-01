@@ -1,0 +1,73 @@
+name: Build macOS Installer
+
+on:
+  workflow_call:
+    inputs:
+      company:
+        required: true
+        type: string
+      plugin:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      has-webview:
+        required: false
+        type: boolean
+        default: false
+      node-version:
+        required: false
+        type: string
+        default: '18'
+      web-dir:
+        required: false
+        type: string
+        default: ''
+      muds-path:
+        required: false
+        type: string
+        default: src/shared/MUDS
+    secrets:
+      APPLE_DEVELOPER_ID:
+        required: false
+      SIGNING_IDENTITY:
+        required: false
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        if: inputs.has-webview
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.web-dir }}/package-lock.json
+
+      - name: Install Python dependencies
+        run: pip3 install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
+
+      - name: Build
+        env:
+          PYTHONPATH: ${{ inputs.muds-path }}
+        run: >
+          python3 -m installer_builder
+          --company "${{ inputs.company }}"
+          --plugin "${{ inputs.plugin }}"
+          --version "${{ inputs.version }}"
+          ${{ inputs.has-webview && format('--web-dir {0}', inputs.web-dir) || '--skip-web-ui' }}
+          ${{ secrets.APPLE_DEVELOPER_ID && format('--apple-developer-id {0}', secrets.APPLE_DEVELOPER_ID) || '' }}
+          ${{ secrets.SIGNING_IDENTITY && format('--signing-identity "{0}"', secrets.SIGNING_IDENTITY) || '' }}
+          -v
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: installers/macos/*.pkg

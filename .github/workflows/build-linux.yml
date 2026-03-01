@@ -1,0 +1,77 @@
+name: Build Linux Installer
+
+on:
+  workflow_call:
+    inputs:
+      company:
+        required: true
+        type: string
+      plugin:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      has-webview:
+        required: false
+        type: boolean
+        default: false
+      node-version:
+        required: false
+        type: string
+        default: '18'
+      web-dir:
+        required: false
+        type: string
+        default: ''
+      muds-path:
+        required: false
+        type: string
+        default: src/shared/MUDS
+      extra-apt-packages:
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        if: inputs.has-webview
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.web-dir }}/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libasound2-dev \
+            libfreetype6-dev libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev rpm ${{ inputs.extra-apt-packages }}
+
+      - name: Install Python dependencies
+        run: pip install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
+
+      - name: Build
+        env:
+          PYTHONPATH: ${{ inputs.muds-path }}
+        run: >
+          python3 -m installer_builder
+          --company "${{ inputs.company }}"
+          --plugin "${{ inputs.plugin }}"
+          --version "${{ inputs.version }}"
+          ${{ inputs.has-webview && format('--web-dir {0}', inputs.web-dir) || '--skip-web-ui' }}
+          -v
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: installers/linux/*

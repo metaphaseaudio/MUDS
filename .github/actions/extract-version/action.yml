@@ -1,0 +1,29 @@
+name: Extract Version
+description: >
+  Extract version from a git tag (refs/tags/v* → strip prefix) or generate
+  a dev version with branch name + short SHA.
+
+outputs:
+  version:
+    description: Semantic version string (e.g. "1.2.0" or "0.0.0-dev+develop.a1b2c3d")
+    value: ${{ steps.extract.outputs.version }}
+  is_release:
+    description: "'true' when the ref is a version tag, 'false' otherwise"
+    value: ${{ steps.extract.outputs.is_release }}
+
+runs:
+  using: composite
+  steps:
+    - id: extract
+      shell: bash
+      run: |
+        if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "is_release=true" >> "$GITHUB_OUTPUT"
+        else
+          BRANCH="${GITHUB_REF_NAME//\//-}"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "version=0.0.0-dev+${BRANCH}.${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "is_release=false" >> "$GITHUB_OUTPUT"
+        fi

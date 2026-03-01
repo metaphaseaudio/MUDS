@@ -1,0 +1,78 @@
+name: Build Windows Installer
+
+on:
+  workflow_call:
+    inputs:
+      company:
+        required: true
+        type: string
+      plugin:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      has-webview:
+        required: false
+        type: boolean
+        default: false
+      node-version:
+        required: false
+        type: string
+        default: '18'
+      web-dir:
+        required: false
+        type: string
+        default: ''
+      muds-path:
+        required: false
+        type: string
+        default: src/shared/MUDS
+    secrets:
+      SIGNING_CERT:
+        required: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        if: inputs.has-webview
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.web-dir }}/package-lock.json
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Add Inno Setup to PATH
+        shell: bash
+        run: echo "C:/Program Files (x86)/Inno Setup 6" >> "$GITHUB_PATH"
+
+      - name: Install Python dependencies
+        run: pip install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
+
+      - name: Build
+        shell: bash
+        env:
+          PYTHONPATH: ${{ inputs.muds-path }}
+        run: >
+          python -m installer_builder
+          --company "${{ inputs.company }}"
+          --plugin "${{ inputs.plugin }}"
+          --version "${{ inputs.version }}"
+          ${{ inputs.has-webview && format('--web-dir {0}', inputs.web-dir) || '--skip-web-ui' }}
+          ${{ secrets.SIGNING_CERT && format('--signing-cert "{0}"', secrets.SIGNING_CERT) || '' }}
+          -v
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: installers/windows/*.exe

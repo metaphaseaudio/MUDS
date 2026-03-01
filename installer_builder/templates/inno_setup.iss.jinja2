@@ -1,0 +1,72 @@
+[Setup]
+AppId={{ app_id }}
+AppName={{ plugin_name }}
+AppVersion={{ version }}
+AppPublisher={{ company_name }}
+AppPublisherURL={{ url }}
+AppSupportURL={{ url }}
+AppUpdatesURL={{ url }}
+OutputBaseFilename="{{ output_base_filename }}"
+{% if output_dir %}
+OutputDir={{ output_dir }}
+{% endif %}
+LicenseFile={{ eula_path }}
+Compression=lzma
+SolidCompression=yes
+WizardStyle=modern
+DisableDirPage=yes
+DisableProgramGroupPage=yes
+DefaultDirName="{autopf64}\{{ company_name }}\{{ plugin_name }}"
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Components]
+Name: "vst3"; Description: "VST3 Plug-in"; Types: full
+Name: "presets"; Description: "Factory Presets"; Types: full
+
+[Files]
+Source: "{{ vst3_source }}"; DestDir: "{code:GetVST3Dir}\{{ vst3_bundle_name }}"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{{ presets_source }}"; DestDir: "{code:GetPresetsDir}"; Components: presets; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{group}\{cm:UninstallProgram,{{ plugin_name }}}"; Filename: "{uninstallexe}"
+
+[Registry]
+Root: HKCU; Subkey: "Software\{{ registry_key }}"; Flags: uninsdeletekey; ValueType: string; ValueName: "VST3InstallPath"; ValueData: "{code:GetVST3Dir}";
+Root: HKCU; Subkey: "Software\{{ registry_key }}"; Flags: uninsdeletekey; ValueType: string; ValueName: "PresetsInstallPath"; ValueData: "{code:GetPresetsDir}";
+
+[Code]
+var
+  VST3DirPage: TInputDirWizardPage;
+  PresetsDirPage: TInputDirWizardPage;
+
+procedure InitializeWizard;
+begin
+  PresetsDirPage := CreateInputDirPage(wpSelectComponents, 'Select install path', 'Presets', 'Select where to install the factory presets', False, '');
+  PresetsDirPage.Add('Factory Presets');
+  PresetsDirPage.Values[0] := GetPreviousData('PresetsDir', ExpandConstant('{{ default_presets_dir }}'));
+
+  VST3DirPage := CreateInputDirPage(wpSelectComponents, 'Select install path', 'VST3', 'Select where to install the VST3 plug-in', False, '');
+  VST3DirPage.Add('VST3 Plug-in');
+  VST3DirPage.Values[0] := GetPreviousData('VST3Dir', ExpandConstant('{{ default_vst3_dir }}'));
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if PageID = VST3DirPage.ID then
+    Result := not IsComponentSelected('vst3');
+  if PageID = PresetsDirPage.ID then
+    Result := not IsComponentSelected('presets');
+end;
+
+function GetVST3Dir(Param: String): String;
+begin
+  Result := VST3DirPage.Values[0];
+end;
+
+function GetPresetsDir(Param: String): String;
+begin
+  Result := PresetsDirPage.Values[0];
+end;
