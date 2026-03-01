@@ -55,6 +55,15 @@ jobs:
         shell: bash
         run: echo "C:/Program Files (x86)/Inno Setup 6" >> "$GITHUB_PATH"
 
+      - name: Prefer Strawberry Perl over MSYS2
+        shell: pwsh
+        run: echo "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Install Python dependencies
         run: pip install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
 

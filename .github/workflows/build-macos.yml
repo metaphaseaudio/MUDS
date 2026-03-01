@@ -50,6 +50,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ${{ inputs.web-dir }}/package-lock.json
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Install Python dependencies
         run: pip3 install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
 
