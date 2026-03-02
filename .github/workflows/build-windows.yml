@@ -48,12 +48,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ${{ inputs.web-dir }}/package-lock.json
 
-      - name: Install Inno Setup
-        run: choco install innosetup -y
+      - name: Install Inno Setup, CMake, and Ninja
+        run: choco install innosetup cmake ninja -y
 
-      - name: Add Inno Setup to PATH
+      - name: Add Inno Setup and CMake to PATH
         shell: bash
-        run: echo "C:/Program Files (x86)/Inno Setup 6" >> "$GITHUB_PATH"
+        run: |
+          echo "C:/Program Files (x86)/Inno Setup 6" >> "$GITHUB_PATH"
+          echo "C:/Program Files/CMake/bin" >> "$GITHUB_PATH"
 
       - name: Setup Strawberry Perl
         uses: shogo82148/actions-setup-perl@v1
@@ -82,7 +84,7 @@ jobs:
       - name: Setup MSVC Developer Environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x86_64
+          arch: x64
 
       - name: Setup Python
         uses: actions/setup-python@v5
