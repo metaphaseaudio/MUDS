@@ -82,7 +82,7 @@ jobs:
       - name: Setup MSVC Developer Environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
+          arch: x86_64
 
       - name: Setup Python
         uses: actions/setup-python@v5
