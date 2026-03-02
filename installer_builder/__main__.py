@@ -10,6 +10,7 @@ Usage:
 import argparse
 import logging
 import platform
+import subprocess
 import sys
 from typing import Dict
 from pathlib import Path
@@ -26,6 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
+    stream=sys.stdout,
 )
 logger = logging.getLogger(__name__)
 
@@ -259,16 +261,24 @@ def main(argv: list[str] | None = None) -> None:
     platform_name = _detect_platform()
     config = build_config(args, platform_name)
 
-    bundle_path = build(config)
+    try:
+        bundle_path = build(config)
 
-    if platform_name == "darwin":
-        _warn_if_macos_signing_missing(config)
-        build_macos_installer(config, bundle_path)
-    elif platform_name == "windows":
-        _warn_if_windows_signing_missing(config)
-        build_windows_installer(config, bundle_path)
-    elif platform_name == "linux":
-        build_linux_installer(config, bundle_path)
+        if platform_name == "darwin":
+            _warn_if_macos_signing_missing(config)
+            build_macos_installer(config, bundle_path)
+        elif platform_name == "windows":
+            _warn_if_windows_signing_missing(config)
+            build_windows_installer(config, bundle_path)
+        elif platform_name == "linux":
+            build_linux_installer(config, bundle_path)
+
+    except subprocess.CalledProcessError as e:
+        logger.error("Command failed (exit code %d): %s", e.returncode, e.cmd)
+        sys.exit(e.returncode)
+    except Exception as e:
+        logger.error("%s", e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -71,6 +71,7 @@ jobs:
         shell: bash
         env:
           PYTHONPATH: ${{ inputs.muds-path }}
+          PYTHONUNBUFFERED: "1"
         run: >
           python -m installer_builder
           --company "${{ inputs.company }}"
