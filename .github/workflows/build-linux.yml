@@ -61,6 +61,7 @@ jobs:
             libcairo2-dev libpango1.0-dev \
             libglu1-mesa-dev mesa-common-dev \
             libjack-jackd2-dev ladspa-sdk \
+            libgtkmm-3.0-dev libsqlite3-dev libsecret-1-dev zlib1g-dev \
             rpm ${{ inputs.extra-apt-packages }}
 
       - name: Setup Python

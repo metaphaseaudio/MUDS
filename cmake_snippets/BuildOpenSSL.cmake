@@ -37,13 +37,14 @@ if(WIN32)
     # Windows requires Perl to configure OpenSSL from source.
     # NASM is optional; without it, the no-asm flag is added automatically.
     find_program(PERL_EXECUTABLE perl REQUIRED
+        HINTS "C:/Strawberry/perl/bin"
         DOC "Perl executable — install Strawberry Perl from https://strawberryperl.com/")
 
     find_program(NASM_EXECUTABLE nasm
         DOC "NASM assembler (optional) — enables OpenSSL assembly optimisations")
 
     set(_OPENSSL_WIN_BASE
-        perl Configure VC-WIN64A no-shared no-tests
+        "${PERL_EXECUTABLE}" Configure VC-WIN64A no-shared no-tests
         --prefix=${OPENSSL_INSTALL_DIR}
         --openssldir=${OPENSSL_INSTALL_DIR}
     )
