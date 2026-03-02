@@ -61,23 +61,23 @@ jobs:
           perl-version: '5.40'
           distribution: strawberry
 
-      - name: Remove Strawberry C toolchain from PATH
+      - name: Disable Strawberry C toolchain binaries
         shell: pwsh
         run: |
-          # Remove strawberry c\bin from GITHUB_PATH and current PATH
+          # Strawberry Perl bundles cmake, ninja, gcc, etc. in its c\bin.
+          # Rename them so they can't shadow the MSVC toolchain.
+          # We avoid modifying PATH via GITHUB_ENV because that clobbers
+          # environment changes made by subsequent actions (e.g. ilammy/msvc-dev-cmd).
           $strawberryBin = (Get-Command perl).Source | Split-Path | Split-Path
           $cBin = Join-Path $strawberryBin 'c\bin'
           if (Test-Path $cBin) {
-            # Rename cmake/ninja so they can't shadow MSVC tools
             Get-ChildItem $cBin -Filter 'cmake*' | Rename-Item -NewName { $_.Name + '.disabled' }
             Get-ChildItem $cBin -Filter 'ninja*' | Rename-Item -NewName { $_.Name + '.disabled' }
             Get-ChildItem $cBin -Filter 'gmake*' | Rename-Item -NewName { $_.Name + '.disabled' }
+            Get-ChildItem $cBin -Filter 'gcc*'   | Rename-Item -NewName { $_.Name + '.disabled' }
+            Get-ChildItem $cBin -Filter 'g++*'   | Rename-Item -NewName { $_.Name + '.disabled' }
+            Get-ChildItem $cBin -Filter 'c++*'   | Rename-Item -NewName { $_.Name + '.disabled' }
           }
-          # Also strip from PATH for this and subsequent steps
-          $cleaned = ($env:PATH -split ';' | Where-Object {
-            $_ -notmatch 'strawberry.*\\c\\bin'
-          }) -join ';'
-          echo "PATH=$cleaned" >> $env:GITHUB_ENV
 
       - name: Setup MSVC Developer Environment
         uses: ilammy/msvc-dev-cmd@v1
