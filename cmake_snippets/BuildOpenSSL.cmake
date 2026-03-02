@@ -44,7 +44,7 @@ if(WIN32)
         DOC "NASM assembler (optional) — enables OpenSSL assembly optimisations")
 
     set(_OPENSSL_WIN_BASE
-        "${PERL_EXECUTABLE}" Configure VC-WIN64A no-shared no-tests
+        "${PERL_EXECUTABLE}" Configure VC-WIN64A no-shared no-tests no-module
         --prefix=${OPENSSL_INSTALL_DIR}
         --openssldir=${OPENSSL_INSTALL_DIR}
     )
