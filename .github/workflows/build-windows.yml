@@ -64,6 +64,16 @@ jobs:
       - name: Remove Strawberry C toolchain from PATH
         shell: pwsh
         run: |
+          # Remove strawberry c\bin from GITHUB_PATH and current PATH
+          $strawberryBin = (Get-Command perl).Source | Split-Path | Split-Path
+          $cBin = Join-Path $strawberryBin 'c\bin'
+          if (Test-Path $cBin) {
+            # Rename cmake/ninja so they can't shadow MSVC tools
+            Get-ChildItem $cBin -Filter 'cmake*' | Rename-Item -NewName { $_.Name + '.disabled' }
+            Get-ChildItem $cBin -Filter 'ninja*' | Rename-Item -NewName { $_.Name + '.disabled' }
+            Get-ChildItem $cBin -Filter 'gmake*' | Rename-Item -NewName { $_.Name + '.disabled' }
+          }
+          # Also strip from PATH for this and subsequent steps
           $cleaned = ($env:PATH -split ';' | Where-Object {
             $_ -notmatch 'strawberry.*\\c\\bin'
           }) -join ';'

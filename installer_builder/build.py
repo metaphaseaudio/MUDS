@@ -40,7 +40,7 @@ def build(cfg: PluginBuildConfig, project_root: Path=Path.cwd()) -> Path:
     if platform.system() == "Darwin":
         cmake_flags.append("-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
     elif platform.system() == "Windows":
-        cmake_flags.append("-A x64")
+        cmake_flags.extend(["-G", "Ninja"])
     run(cmake_flags, cwd=build_dir)
     run(["cmake", "--build", ".", "--config", "Release", "--parallel", "--target", cmake_target], cwd=build_dir)
 
