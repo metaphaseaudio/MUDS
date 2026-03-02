@@ -62,6 +62,7 @@ jobs:
             libglu1-mesa-dev mesa-common-dev \
             libjack-jackd2-dev ladspa-sdk \
             libgtkmm-3.0-dev libsqlite3-dev libsecret-1-dev zlib1g-dev \
+            libwebkit2gtk-4.1-dev \
             rpm ${{ inputs.extra-apt-packages }}
 
       - name: Setup Python
