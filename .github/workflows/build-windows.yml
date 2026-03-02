@@ -55,11 +55,26 @@ jobs:
         shell: bash
         run: echo "C:/Program Files (x86)/Inno Setup 6" >> "$GITHUB_PATH"
 
-      - name: Prefer Strawberry Perl over MSYS2
+      - name: Remove MSYS2 Perl and prefer Strawberry Perl
         shell: pwsh
         run: |
+          # Remove all MSYS2/Git paths that contain perl from PATH to prevent conflicts
+          $currentPath = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+          
+          # Add Strawberry Perl first
           echo "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
-          # Verify Perl is Strawberry and has the required modules
+          
+          # Remove MSYS2 usr/bin which contains conflicting perl
+          # This writes to GITHUB_PATH so it takes effect in subsequent steps
+          $msysPerl = "C:\msys64\usr\bin"
+          if (Test-Path $msysPerl\perl.exe) {
+            # Rename the MSYS2 perl so it can never be found
+            Rename-Item "$msysPerl\perl.exe" "$msysPerl\perl.exe.bak" -Force
+            Write-Host "Renamed MSYS2 perl to prevent conflicts"
+          }
+          
+          # Verify correct Perl is active
+          & "C:\Strawberry\perl\bin\perl.exe" -v
           & "C:\Strawberry\perl\bin\perl.exe" -e "use Locale::Maketext::Simple; print qq{Locale::Maketext::Simple OK\n}"
 
       - name: Setup MSVC Developer Environment
