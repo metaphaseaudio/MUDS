@@ -61,6 +61,14 @@ jobs:
           perl-version: '5.40'
           distribution: strawberry
 
+      - name: Remove Strawberry C toolchain from PATH
+        shell: pwsh
+        run: |
+          $cleaned = ($env:PATH -split ';' | Where-Object {
+            $_ -notmatch 'strawberry.*\\c\\bin'
+          }) -join ';'
+          echo "PATH=$cleaned" >> $env:GITHUB_ENV
+
       - name: Setup MSVC Developer Environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
