@@ -57,7 +57,15 @@ jobs:
 
       - name: Prefer Strawberry Perl over MSYS2
         shell: pwsh
-        run: echo "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
+        run: |
+          echo "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
+          # Verify Perl is Strawberry and has the required modules
+          & "C:\Strawberry\perl\bin\perl.exe" -e "use Locale::Maketext::Simple; print qq{Locale::Maketext::Simple OK\n}"
+
+      - name: Setup MSVC Developer Environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Setup Python
         uses: actions/setup-python@v5
