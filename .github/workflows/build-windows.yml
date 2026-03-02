@@ -70,7 +70,7 @@ jobs:
           # Rename them so they can't shadow the MSVC toolchain.
           # We avoid modifying PATH via GITHUB_ENV because that clobbers
           # environment changes made by subsequent actions (e.g. ilammy/msvc-dev-cmd).
-          $strawberryBin = (Get-Command perl).Source | Split-Path | Split-Path
+          $strawberryBin = (Get-Command perl).Source | Split-Path | Split-Path | Split-Path
           $cBin = Join-Path $strawberryBin 'c\bin'
           if (Test-Path $cBin) {
             Get-ChildItem $cBin -Filter 'cmake*' | Rename-Item -NewName { $_.Name + '.disabled' }
