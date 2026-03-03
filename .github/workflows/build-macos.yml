@@ -58,6 +58,18 @@ jobs:
       - name: Install Python dependencies
         run: pip3 install -r ${{ inputs.muds-path }}/installer_builder/requirements.txt
 
+      - name: Create build directory
+        run: mkdir -p src/build-release/_deps
+
+      - name: Cache OpenSSL
+        uses: actions/cache@v4
+        with:
+          path: |
+            src/build-release/_deps/openssl
+            src/build-release/_deps/openssl-arm64
+            src/build-release/_deps/openssl-x86_64
+          key: openssl-3.2.0-${{ runner.os }}-universal-${{ hashFiles('src/shared/MUDS/cmake_snippets/BuildOpenSSL.cmake') }}
+
       - name: Build
         env:
           PYTHONPATH: ${{ inputs.muds-path }}

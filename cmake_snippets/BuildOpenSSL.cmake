@@ -61,21 +61,27 @@ if(WIN32)
     set(OPENSSL_SSL_LIBRARY    ${OPENSSL_INSTALL_DIR}/lib/libssl.lib)
     set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libcrypto.lib)
 
-    ExternalProject_Add(openssl_external
-            URL ${OPENSSL_URL}
-            URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
-            CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-            BUILD_COMMAND     ${OPENSSL_BUILD_COMMAND}
-            INSTALL_COMMAND   ${OPENSSL_INSTALL_COMMAND}
-            BUILD_IN_SOURCE 1
-            BUILD_BYPRODUCTS
-                ${OPENSSL_SSL_LIBRARY}
-                ${OPENSSL_CRYPTO_LIBRARY}
-            LOG_DOWNLOAD 1
-            USES_TERMINAL_CONFIGURE 1
-            USES_TERMINAL_BUILD 1
-            USES_TERMINAL_INSTALL 1
-    )
+    if(EXISTS "${OPENSSL_SSL_LIBRARY}" AND EXISTS "${OPENSSL_CRYPTO_LIBRARY}"
+       AND EXISTS "${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h")
+        message(STATUS "OpenSSL ${OPENSSL_VERSION} found pre-built at ${OPENSSL_INSTALL_DIR} — skipping build")
+        add_custom_target(openssl_external)
+    else()
+        ExternalProject_Add(openssl_external
+                URL ${OPENSSL_URL}
+                URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
+                CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+                BUILD_COMMAND     ${OPENSSL_BUILD_COMMAND}
+                INSTALL_COMMAND   ${OPENSSL_INSTALL_COMMAND}
+                BUILD_IN_SOURCE 1
+                BUILD_BYPRODUCTS
+                    ${OPENSSL_SSL_LIBRARY}
+                    ${OPENSSL_CRYPTO_LIBRARY}
+                LOG_DOWNLOAD 1
+                USES_TERMINAL_CONFIGURE 1
+                USES_TERMINAL_BUILD 1
+                USES_TERMINAL_INSTALL 1
+        )
+    endif()
     set(OPENSSL_EXTERNAL_TARGET openssl_external)
 
 elseif(APPLE)
@@ -98,6 +104,16 @@ elseif(APPLE)
 
     if(NUM_ARCHS GREATER 1)
         # Universal binary - need to build each arch separately and combine
+        set(OPENSSL_SSL_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libssl.a)
+        set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a)
+
+        if(EXISTS "${OPENSSL_SSL_LIBRARY}" AND EXISTS "${OPENSSL_CRYPTO_LIBRARY}"
+           AND EXISTS "${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h")
+            message(STATUS "OpenSSL ${OPENSSL_VERSION} found pre-built at ${OPENSSL_INSTALL_DIR} — skipping build")
+            add_custom_target(openssl_universal)
+            set(OPENSSL_EXTERNAL_TARGET openssl_universal)
+        else()
+
         message(STATUS "Building OpenSSL as universal binary for: ${BUILD_ARCHS}")
 
         set(ARCH_LIBS_SSL "")
@@ -191,6 +207,8 @@ elseif(APPLE)
 
         set(OPENSSL_EXTERNAL_TARGET openssl_universal)
 
+        endif() # pre-built check else block
+
     else()
         # Single architecture build
         list(GET BUILD_ARCHS 0 ARCH)
@@ -210,31 +228,37 @@ elseif(APPLE)
 
         message(STATUS "Building OpenSSL for single architecture: ${ARCH}")
 
-        ExternalProject_Add(openssl_external
-                URL ${OPENSSL_URL}
-                URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
-                CONFIGURE_COMMAND
-                    ${CMAKE_COMMAND} -E env
-                        "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
-                    ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
-                    -mmacos-version-min=${ARCH_DEPLOYMENT_TARGET}
-                    --prefix=${OPENSSL_INSTALL_DIR}
-                    --openssldir=${OPENSSL_INSTALL_DIR}
-                BUILD_COMMAND
-                    ${CMAKE_COMMAND} -E env
-                        "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
-                    make -j8
-                INSTALL_COMMAND make install_sw install_ssldirs
-                BUILD_IN_SOURCE 1
-                BUILD_BYPRODUCTS
-                ${OPENSSL_INSTALL_DIR}/lib/libssl.a
-                ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
-                ${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h
-                LOG_DOWNLOAD 1
-                LOG_CONFIGURE 1
-                LOG_BUILD 1
-                LOG_INSTALL 1
-        )
+        if(EXISTS "${OPENSSL_INSTALL_DIR}/lib/libssl.a" AND EXISTS "${OPENSSL_INSTALL_DIR}/lib/libcrypto.a"
+           AND EXISTS "${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h")
+            message(STATUS "OpenSSL ${OPENSSL_VERSION} found pre-built at ${OPENSSL_INSTALL_DIR} — skipping build")
+            add_custom_target(openssl_external)
+        else()
+            ExternalProject_Add(openssl_external
+                    URL ${OPENSSL_URL}
+                    URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
+                    CONFIGURE_COMMAND
+                        ${CMAKE_COMMAND} -E env
+                            "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                        ./Configure ${OPENSSL_PLATFORM} no-shared no-tests
+                        -mmacos-version-min=${ARCH_DEPLOYMENT_TARGET}
+                        --prefix=${OPENSSL_INSTALL_DIR}
+                        --openssldir=${OPENSSL_INSTALL_DIR}
+                    BUILD_COMMAND
+                        ${CMAKE_COMMAND} -E env
+                            "MACOSX_DEPLOYMENT_TARGET=${ARCH_DEPLOYMENT_TARGET}"
+                        make -j8
+                    INSTALL_COMMAND make install_sw install_ssldirs
+                    BUILD_IN_SOURCE 1
+                    BUILD_BYPRODUCTS
+                    ${OPENSSL_INSTALL_DIR}/lib/libssl.a
+                    ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+                    ${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h
+                    LOG_DOWNLOAD 1
+                    LOG_CONFIGURE 1
+                    LOG_BUILD 1
+                    LOG_INSTALL 1
+            )
+        endif()
 
         set(OPENSSL_EXTERNAL_TARGET openssl_external)
     endif()
@@ -254,22 +278,28 @@ else() # Linux
     set(OPENSSL_SSL_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libssl.a)
     set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a)
 
-    ExternalProject_Add(openssl_external
-            URL ${OPENSSL_URL}
-            URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
-            CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-            BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-            INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
-            BUILD_IN_SOURCE 1
-            BUILD_BYPRODUCTS
-            ${OPENSSL_SSL_LIBRARY}
-            ${OPENSSL_CRYPTO_LIBRARY}
-            ${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h
-            LOG_DOWNLOAD 1
-            USES_TERMINAL_CONFIGURE 1
-            USES_TERMINAL_BUILD 1
-            USES_TERMINAL_INSTALL 1
-    )
+    if(EXISTS "${OPENSSL_SSL_LIBRARY}" AND EXISTS "${OPENSSL_CRYPTO_LIBRARY}"
+       AND EXISTS "${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h")
+        message(STATUS "OpenSSL ${OPENSSL_VERSION} found pre-built at ${OPENSSL_INSTALL_DIR} — skipping build")
+        add_custom_target(openssl_external)
+    else()
+        ExternalProject_Add(openssl_external
+                URL ${OPENSSL_URL}
+                URL_HASH SHA256=14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
+                CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
+                BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
+                INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
+                BUILD_IN_SOURCE 1
+                BUILD_BYPRODUCTS
+                ${OPENSSL_SSL_LIBRARY}
+                ${OPENSSL_CRYPTO_LIBRARY}
+                ${OPENSSL_INSTALL_DIR}/include/openssl/ssl.h
+                LOG_DOWNLOAD 1
+                USES_TERMINAL_CONFIGURE 1
+                USES_TERMINAL_BUILD 1
+                USES_TERMINAL_INSTALL 1
+        )
+    endif()
 
     set(OPENSSL_EXTERNAL_TARGET openssl_external)
 endif()
