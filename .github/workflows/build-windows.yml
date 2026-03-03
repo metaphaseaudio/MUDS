@@ -86,6 +86,15 @@ jobs:
         with:
           arch: x64
 
+      - name: Hide MSYS2 link.exe to prevent PATH conflict with MSVC linker
+        shell: bash
+        run: |
+          # Git Bash ships /usr/bin/link (Unix hard-link utility) which shadows
+          # the MSVC link.exe when nmake invokes "link" during the OpenSSL build.
+          if [ -f /usr/bin/link ]; then
+            mv /usr/bin/link /usr/bin/link.disabled
+          fi
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
